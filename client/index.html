@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#141714">
+  <meta name="description" content="Кооперативный браузерный 2D-экшен. Пройдите операцию «Зелёный ад» вдвоём.">
+  <title>IRON REBELLION: Последний рубеж</title>
+  <link rel="icon" type="image/svg+xml" href="/mark.svg">
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="/socket.io/socket.io.js"></script>
+  <script defer src="/vendor/phaser.min.js"></script>
+  <script type="module" src="/main.js"></script>
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <button id="home-button" class="brand" aria-label="Главный экран">
+        <svg width="29" height="29" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M4 5h24v11l-12 11L4 16V5Z" stroke="currentColor" stroke-width="2"/><path d="m9 11 7 8 7-8M12 8l4 5 4-5" stroke="currentColor" stroke-width="2" stroke-linecap="square"/></svg>
+        <span>IRON REBELLION<small>ПОСЛЕДНИЙ РУБЕЖ</small></span>
+      </button>
+      <nav aria-label="Разделы">
+        <button id="operations-nav" class="nav-button is-current">Операция</button>
+        <button id="arsenal-nav" class="nav-button">Арсенал <span id="nav-credits">0 CR</span></button>
+      </nav>
+      <span id="net-status" class="net-status" aria-live="polite"><i></i><span>Подключение</span></span>
+    </header>
+
+    <main>
+      <section id="home" class="screen">
+        <div class="intro">
+          <canvas id="briefing-art" width="1140" height="490" aria-hidden="true"></canvas>
+          <div class="intro-scrim"></div>
+          <div class="intro-content">
+            <p class="mission-label"><i></i> ОПЕРАЦИЯ «ЖЕЛЕЗНЫЙ ШТОРМ»</p>
+            <h1>IRON<br>REBELLION<span>.</span></h1>
+            <p class="intro-subtitle">ПОСЛЕДНИЙ РУБЕЖ</p>
+            <p class="intro-text">Пройдите через джунгли, переживите обрушение моста и уничтожьте боевую машину HELIOS.</p>
+            <a class="button primary" href="#deploy" id="jump-to-deploy">К ВЫСАДКЕ <span aria-hidden="true">↘</span></a>
+          </div>
+          <div class="intro-map"><span>01 / 01</span><strong>ЗЕЛЁНЫЙ АД</strong></div>
+        </div>
+
+        <section id="deploy" class="deploy-grid" aria-label="Подготовка к вылету">
+          <div class="panel loadout">
+            <div class="panel-heading"><h2>ВЫБОР БОЙЦА</h2></div>
+            <label class="nickname-label" for="nick">Позывной</label>
+            <input id="nick" type="text" maxlength="20" value="Боец" autocomplete="off" spellcheck="false">
+            <div id="characters" class="character-options" role="group" aria-label="Выбор персонажа"></div>
+          </div>
+          <div class="panel modes">
+            <div class="panel-heading"><h2>РЕЖИМ ИГРЫ</h2></div>
+            <button id="host" class="button primary wide">СОЗДАТЬ КОМНАТУ <span aria-hidden="true">↗</span></button>
+            <form id="join-form" class="join-form">
+              <label class="sr-only" for="join-code">Код комнаты</label>
+              <input id="join-code" maxlength="5" placeholder="Код комнаты" autocomplete="off" spellcheck="false" autocapitalize="characters" required>
+              <button class="button secondary" type="submit">ВОЙТИ</button>
+            </form>
+            <button id="solo" class="button quiet wide">ОДИНОЧНАЯ ТРЕНИРОВКА <span aria-hidden="true">→</span></button>
+            <p class="mode-hint">В кооперативе нужны два игрока. Отправьте другу ссылку из лобби.</p>
+          </div>
+        </section>
+      </section>
+
+      <section id="lobby" class="screen panel detail-panel" hidden>
+        <p class="mission-label"><i></i> КООПЕРАТИВ · 2 ИГРОКА</p>
+        <h1>ОТРЯД НА СВЯЗИ</h1>
+        <p class="detail-text">Миссия 01 · Зелёный ад</p>
+        <div class="invite">
+          <div><small>КОД КОМНАТЫ</small><strong id="lobby-code"></strong></div>
+          <button id="copy-invite" class="button secondary">КОПИРОВАТЬ ССЫЛКУ</button>
+        </div>
+        <input id="invite-url" readonly hidden aria-label="Ссылка на комнату">
+        <div id="members" class="members"></div>
+        <p id="lobby-hint" class="mode-hint"></p>
+        <div class="actions">
+          <button id="ready" class="button secondary">ГОТОВ</button>
+          <button id="start" class="button primary">НАЧАТЬ МИССИЮ <span aria-hidden="true">↗</span></button>
+          <button id="leave-lobby" class="button quiet">ВЫЙТИ</button>
+        </div>
+      </section>
+
+      <section id="play" class="screen" hidden>
+        <div class="play-top">
+          <div><span class="mission-label"><i></i> МИССИЯ 01</span> <strong>ЗЕЛЁНЫЙ АД</strong><span id="play-room"></span></div>
+          <div class="play-tools"><button id="mute" class="nav-button" aria-pressed="false">Звук вкл.</button><button id="pause" class="nav-button">Меню <kbd>Esc</kbd></button></div>
+        </div>
+        <div id="game-shell">
+          <div id="game"></div>
+          <div id="hud" class="hud">
+            <div class="hud-top">
+              <div class="hud-player">
+                <div class="hud-caption"><span id="hud-name">ФАНТОМ</span><strong id="hud-hp">100 HP</strong></div>
+                <div class="meter"><div id="health-fill"></div></div>
+                <div id="hud-squad"></div>
+              </div>
+              <div class="hud-objective"><span id="hud-zone">БЕРЕГ РЕКИ</span><strong id="hud-objective">НАЙДИТЕ АВАНПОСТ</strong></div>
+            </div>
+            <div id="boss-hud" class="boss-hud" hidden><div class="hud-caption"><strong>БУЛЬДОГ-01</strong><span id="boss-stage">БРОНЯ</span></div><div class="meter"><div id="boss-fill"></div></div></div>
+            <div id="game-alert" class="game-alert" hidden><strong id="alert-title"></strong><span id="alert-detail"></span></div>
+            <div class="hud-bottom">
+              <div class="hud-ability"><span id="ability-key">F</span><div><strong id="ability-name"></strong><small id="ability-state"></small></div></div>
+              <div class="hud-ammo"><div><small id="hud-weapon"></small><span id="hud-grenades"></span></div><strong id="hud-ammo"></strong></div>
+            </div>
+          </div>
+          <div id="game-menu" class="game-menu" hidden>
+            <div>
+              <h2>МЕНЮ МИССИИ</h2>
+              <p class="mode-hint">Миссия продолжается, пока меню открыто.</p>
+              <button id="resume" class="button primary wide">ПРОДОЛЖИТЬ</button>
+              <button id="leave-game" class="button quiet wide">ПОКИНУТЬ МИССИЮ</button>
+            </div>
+          </div>
+        </div>
+        <div class="controls" aria-label="Управление"><span><kbd>A</kbd> <kbd>D</kbd> Движение</span><span><kbd>Space</kbd> Прыжок</span><span><kbd>S</kbd> Присесть</span><span><kbd>ЛКМ</kbd> Огонь</span><span><kbd>R</kbd> Перезарядка</span><span><kbd>Q</kbd> Оружие</span><span><kbd>G</kbd> Граната</span><span><kbd>E</kbd> Помощь</span><span><kbd>F</kbd> Навык</span></div>
+      </section>
+
+      <section id="result" class="screen panel detail-panel" hidden>
+        <p class="mission-label"><i></i> МИССИЯ 01 · ЗЕЛЁНЫЙ АД</p>
+        <h1 id="result-title"></h1>
+        <p class="detail-text" id="result-detail"></p>
+        <dl id="result-stats" class="result-stats"></dl>
+        <div class="actions">
+          <button id="return" class="button primary">В ЛОББИ</button>
+          <button id="result-shop" class="button secondary">ОТКРЫТЬ АРСЕНАЛ</button>
+          <button id="leave-result" class="button quiet">ВЫЙТИ</button>
+        </div>
+      </section>
+
+      <section id="shop" class="screen" hidden>
+        <div class="arsenal-heading"><div><p class="mission-label"><i></i> СНАРЯЖЕНИЕ</p><h1>АРСЕНАЛ</h1></div><strong id="shop-credits">0 CR</strong></div>
+        <p class="detail-text">Выберите основное оружие для следующей миссии. Запасной пистолет всегда в комплекте.</p>
+        <div id="shop-items" class="shop-grid"></div>
+        <button id="shop-back" class="button quiet">← НАЗАД</button>
+      </section>
+    </main>
+    <div id="toast" role="status" aria-live="polite" hidden></div>
+    <footer><span>IRON REBELLION</span><span>ПК · КЛАВИАТУРА И МЫШЬ</span></footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "iron-rebellion",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "IRON REBELLION — 2D online co-op run and gun",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node server/server.js"
+  },
+  "dependencies": {
+    "@fontsource/barlow-condensed": "5.2.8",
+    "@fontsource/ibm-plex-mono": "5.2.7",
+    "@fontsource/inter": "5.2.8",
+    "phaser": "3.90.0",
+    "socket.io": "4.8.4"
+  }
+}
